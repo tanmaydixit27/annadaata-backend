@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 
-// Register a new user
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -11,15 +10,32 @@ exports.register = async (req, res) => {
   const { fullName, email, password, contactNo, pinCode, address, gender } = req.body;
 
   try {
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
 
-    const newUser = new User({ fullName, email, password, contactNo, pinCode, address, gender });
+    // Hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword, // Save hashed password
+      contactNo,
+      pinCode,
+      address,
+      gender
+    });
+
     await newUser.save();
 
+    // Generate JWT token
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ token, user: { id: newUser._id, fullName, email } });
   } catch (error) {
+    console.error(error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -41,6 +57,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token, user: { id: user._id, fullName: user.fullName, email: user.email } });
   } catch (error) {
+    console.error(error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
