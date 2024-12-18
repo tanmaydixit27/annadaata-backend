@@ -5,14 +5,20 @@ const { validationResult } = require('express-validator');
 
 exports.register = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty()) {
+    console.error('Validation Errors:', errors.array());
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   const { fullName, email, password, contactNo, pinCode, address, gender } = req.body;
 
   try {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'Email already registered' });
+    if (existingUser) {
+      console.error('Email already registered:', email);
+      return res.status(400).json({ message: 'Email already registered' });
+    }
 
     // Hash the password before saving
     const salt = await bcrypt.genSalt(10);
@@ -22,11 +28,11 @@ exports.register = async (req, res) => {
     const newUser = new User({
       fullName,
       email,
-      password: hashedPassword, // Save hashed password
+      password: hashedPassword,
       contactNo,
       pinCode,
       address,
-      gender
+      gender,
     });
 
     await newUser.save();
@@ -35,32 +41,41 @@ exports.register = async (req, res) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.status(201).json({ token, user: { id: newUser._id, fullName, email } });
   } catch (error) {
-    console.error(error.message);
+    console.error('Error in register function:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// User login
 exports.login = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty()) {
+    console.error('Validation Errors:', errors.array());
+    return res.status(400).json({ errors: errors.array() });
+  }
 
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user) {
+      console.error('User not found:', email);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isMatch) {
+      console.error('Invalid password for user:', email);
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token, user: { id: user._id, fullName: user.fullName, email: user.email } });
   } catch (error) {
-    console.error(error.message);
+    console.error('Error in login function:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.updateProfile = async(req,res)=>{
   const {fullName, contactNo, pinCode, address, gender} = req.body;
