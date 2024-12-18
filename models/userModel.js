@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+onst userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  contactNo: { type: String },
-  pinCode: { type: String },
-  address: { type: String },
-  gender: { type: String }
+  contactNo: { type: String, required: true },
+  pinCode: { type: String, required: true },
+  address: { type: String, required: true },
+  gender: { type: String, required: true },
 });
 
 // Encrypt password before saving
