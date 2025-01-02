@@ -6,6 +6,10 @@ const authRoutes = require('./routes/authRoutes');
 const grainsRoutes = require('./routes/grainsRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const passport = require('./middleware/googleAuthMiddleware');
+
+
+
 
 dotenv.config();
 const app = express();
@@ -21,6 +25,7 @@ app.use(cors({
   credentials: true // Allow cookies and authorization headers
 }));
 
+app.use(passport.initialize());
 // Handle preflight requests explicitly
 app.options('*', cors());
 
@@ -49,6 +54,10 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 app.get('/', (req, res) => {
   res.send('Welcome to the Anndaata API');
 });
+
+require('dotenv').config();
+console.log(process.env.GOOGLE_CLIENT_ID); // Debugging: Ensure this logs the correct value
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

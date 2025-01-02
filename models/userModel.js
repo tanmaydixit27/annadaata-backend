@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   contactNo: { type: String, required: true },
   pinCode: { type: String, required: true },
   address: { type: String, required: true },
+  googleId: { type: String, unique: true },
   gender: { type: String, required: true },
 });
 
