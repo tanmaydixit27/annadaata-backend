@@ -7,9 +7,7 @@ const grainsRoutes = require('./routes/grainsRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const passport = require('./middleware/googleAuthMiddleware');
-
-
-
+const aiRoutes = require('./routes/aiRoutes');
 
 dotenv.config();
 const app = express();
@@ -17,35 +15,41 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// Enable CORS
+// CORS – This is all you need (keep this)
 app.use(cors({
-  origin: ['https://annadaata.netlify.app'], // Allow requests from your frontend domain
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-  credentials: true // Allow cookies and authorization headers
+  origin: [
+    'http://localhost:3000',          // Local dev
+    'https://annadaata.netlify.app'   // Deployed
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(passport.initialize());
-// Handle preflight requests explicitly
-app.options('*', cors());
 
-// Global middleware for CORS headers
+// DELETE OR COMMENT OUT THIS ENTIRE BLOCK – IT'S OVERRIDING CORS!
+/*
+app.options('*', cors());  // Also remove this if present
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://annadaata.netlify.app'); // Allow requests from your frontend
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow these methods
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow these headers
-  res.header('Access-Control-Allow-Credentials', 'true'); // Allow credentials
+  res.header('Access-Control-Allow-Origin', 'https://annadaata.netlify.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     return res.status(200).json({});
   }
   next();
 });
+*/
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/grains', grainsRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/ai', aiRoutes);
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
@@ -56,8 +60,7 @@ app.get('/', (req, res) => {
 });
 
 require('dotenv').config();
-console.log(process.env.GOOGLE_CLIENT_ID); // Debugging: Ensure this logs the correct value
-
+console.log(process.env.GOOGLE_CLIENT_ID);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
